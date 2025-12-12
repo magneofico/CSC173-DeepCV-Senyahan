@@ -1,0 +1,29 @@
+# Virtual environment
+.venv/
+venv/
+deepcv_env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VSCode
+.vscode/
+
+# Data (optional: ignore heavy data, keep annotations/code in repo)
+data/raw_images/
+data/processed/
+data/tmp/
+
+# Model weights / checkpoints
+models/weights/
+checkpoints/
+
+# OS junk
+.DS_Store
+Thumbs.db
