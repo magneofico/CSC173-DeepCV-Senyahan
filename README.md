@@ -35,14 +35,134 @@ Human-focused images are central to news reporting, publication work, and photoj
 ### Dataset
 
 - **Source:** Open Images V7 (Person class only)
-- **Filtered:** Images with exactly one person
-- **Custom GT Aesthetic Crop:**
-    - Expand bounding box 10–15%
-    - Optional rule-of-thirds adjustment
-- **Train/Val/Test:** 70% / 15% / 15%
+- **Filtering Criteria:**
+    - Images containing exactly one annotated person
+    - Removes ambiguity and multi-subject framing
+- **Ground-Truth Crop Generation:**
+    - Person bounding boxes converted to crop targets
+    - Bounding boxes optionally expanded by ~10–15% margin to include contextual headroom
+    - All crop coordinates normalized to `[0,1]`
+- **Dataset Split:**
+    - Training / Validation / Test = 70% / 15% / 15%
+    - Fixed random seed used for reproducibility
+
+## Architecture
+### Supervised Architecture: Smart Image Cropper
+
+The supervised component of the system is designed to predict a person-centered crop directly from an input photograph. This model serves as a strong baseline and provides the initial crop for later reinforcement learning refinement.
+![Supervised Architecture pipeline diagram](images/supervised_architecture.png)  
+
+#### 1. Input Representation and Preprocessing
+Each input image is resized to a fixed resolution of 224 × 224 pixels and normalized using standard ImageNet statistics.
+
+$$
+x \in \mathbb{R}^{B \times 3 \times 224 \times 224}
+$$
+
+Where:
+- 𝐵 is the batch size,
+- 3 represents the RGB color channels.
+
+This standardization ensures stable training and enables batch processing.
+
+---
+
+#### 2. Patch Embedding Layer
+
+The input image is divided into non-overlapping **16 × 16** patches, resulting in:
+
+$$
+N = \left(\frac{224}{16}\right)^2 = 196 \text{ patches}
+$$
+
+Each patch is flattened and projected into a latent embedding space using a linear layer:
+
+$$
+\mathbf{p}_i = W \mathbf{x}_i + \mathbf{b}, \qquad \mathbf{p}_i \in \mathbb{R}^D
+$$
+
+where:
+
+- **\(\mathbf{x}_i\)** is the flattened patch,  
+- **\(D = 128\)** is the hidden dimension.
+
+A learnable **[CLS] token** is prepended to the patch sequence to capture global image information.
+
+---
+
+#### 3. Tiny Vision Transformer (TinyViT) Backbone
+
+The patch embeddings are processed by **two transformer encoder blocks**, each composed of:
+
+- Multi-Head Self-Attention (MHSA)
+- Feed-Forward Network (FFN)
+- Residual connections and layer normalization
+
+#### Self-Attention Mechanism
+For each token, attention is computed as:
+
+$$
+\text{Attention}(Q, K, V) = \text{softmax}\left( \frac{QK^\top}{\sqrt{D}} \right) V
+$$
+
+This allows the model to learn **global spatial relationships**, such as:
+
+- where the person is located,
+- how large the person appears,
+- how the subject relates to surrounding context.
+
+---
+
+#### 4. Global Feature Embedding
+
+After the transformer blocks, the embedding corresponding to the **[CLS] token** is extracted:
+
+$$
+\mathbf{z} \in \mathbb{R}^{B \times D}
+$$
+
+This vector represents a **global summary** of the image, encoding composition, subject location, and scale.
+
+---
+
+#### 5. Crop Regression Head (MLP)
+
+The global embedding **z** is passed into a lightweight **multi-layer perceptron (MLP)** that predicts crop parameters.
+
+$$
+\mathbf{h} = \text{GELU}(\mathbf{W_1 z} + \mathbf{b_1})
+$$
+
+$$
+\hat{\mathbf{b}} = \text{sigmoid}(\mathbf{W_2 h} + \mathbf{b_2})
+$$
+
+The output is:
+
+$$
+\hat{\mathbf{b}} = (x_c, y_c, w, h)
+$$
+
+Where:
+
+- \((x_c, y_c)\) is the crop center,  
+- \((w, h)\) are the crop width and height,  
+- all values are normalized to \([0, 1]\).
+
+The **sigmoid activation** ensures valid crop boundaries.
 
 
-### Architecture
+
+
+
+
+
+
+
+
+
+
+
 1. inyViT – Supervised Cropper
     - Patch size: 16
     - Depth: 2 transformer blocks
