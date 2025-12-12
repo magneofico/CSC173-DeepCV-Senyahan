@@ -51,8 +51,8 @@ This project aims to build an intelligent cropping system specifically for **ima
 - Normalized coordinates `(x_center, y_center, width, height)`
 
 ### 1.3 Current Stats
-- **Downloaded images:** TBD (target 300–800)
-- **Filtered valid person images:** TBD
+- **Downloaded images:** 5000
+- **Filtered valid person images:** 1992
 - **Train/Val/Test split:** Planned 70/15/15
 
 Planned preview placeholder:
@@ -98,14 +98,16 @@ images/sample_person_dataset_preview.png
     - Aesthetic quality (1-5)
 
 
-## 4. Next Steps (Before Final Submission)
-- [x] Finish dataset filtering (person images only)
-- [x] Generate aesthetic ground truth crops
-- [ ] Implement TinyViT backbone
-- [ ] Implement crop regression head
-- [ ] Begin supervised training on ∼500 images
-- [ ] Prepare RL Environment Skeleton
-- [ ] Implement Basic RL Policy Network
-- [ ] Train RL Agent (FAST TRAIN)
-- [ ] Photographer Evaluation
-- [ ] Finalize Performance Metrics
+## 4. Progress Achieved Checklists
+- [x] Filter Open Images V7 dataset to person-only images
+- [x] Generate ground-truth crop targets from bounding boxes
+- [x] Integrate TinyViT as the vision backbone for feature extraction
+- [x] Implement bounding-box crop regression head
+- [x] Train supervised crop regression model end-to-end
+- [x] Fine-tune the model and achieve stable convergence
+- [x] Log training and validation metrics in a structured format
+- [ ] Design reinforcement learning environment for crop refinement
+- [ ] Implement lightweight RL policy network (pan/zoom/stop actions)
+- [ ] Train RL agent for aesthetic crop refinement (fast training setup)
+- [ ] Conduct qualitative evaluation with photojournalists
+- [ ] Finalize quantitative and qualitative performance metrics
