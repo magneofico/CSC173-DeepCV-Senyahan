@@ -49,7 +49,8 @@ Human-focused images are central to news reporting, publication work, and photoj
 ## Architecture
 ### Supervised Architecture: Smart Image Cropper
 
-The supervised component of the system is designed to predict a person-centered crop directly from an input photograph. This model serves as a strong baseline and provides the initial crop for later reinforcement learning refinement.
+The supervised component of the system is designed to predict a person-centered crop directly from an input photograph. This model serves as a strong baseline and provides the initial crop for later reinforcement learning refinement.   
+
 ![Supervised Architecture pipeline diagram](images/supervised_architecture.png)  
 
 #### 1. Input Representation and Preprocessing
@@ -145,13 +146,56 @@ $$
 
 Where:
 
-- \((x_c, y_c)\) is the crop center,  
-- \((w, h)\) are the crop width and height,  
+- \(( x_c, y_c )\) is the crop center,  
+- \(( w, h )\) are the crop width and height,  
 - all values are normalized to \([0, 1]\).
 
 The **sigmoid activation** ensures valid crop boundaries.
 
+---
 
+#### 6. Crop Box Parameterization
+
+The predicted crop is converted into corner coordinates:
+
+$$
+x_1 = x_c - \frac{w}{2}, \quad y_1 = y_c - \frac{h}{2}
+$$
+
+$$
+x_2 = x_c + \frac{w}{2}, \quad y_2 = y_c + \frac{h}{2}
+$$
+
+These values define the region used to crop the original image.
+
+---
+
+#### 7. Training Objective
+
+The model is trained end-to-end using a **compound loss**.
+
+#### Smooth L1 Loss
+
+$$\mathcal{L}_{\text{SmoothL1}}(\hat{\mathbf{b}}, \mathbf{b})$$
+
+Encourages stable regression of crop parameters.
+
+#### IoU Loss
+
+$$
+\mathcal{L}_{\text{IoU}} = 1 - \frac{|\hat{B} \cap B|}{|\hat{B} \cup B|}
+$$
+
+Encourages strong spatial overlap between predicted and target crops.
+
+#### Final Loss
+
+$$
+\mathcal{L} = \mathcal{L}_{\text{SmoothL1}} + \mathcal{L}_{\text{IoU}}
+$$
+
+---
+The supervised TinyViT crop regressor learns global image composition using transformer attention and directly predicts an aesthetically meaningful crop around a person, forming a strong foundation for later reinforcement learning refinement.
 
 
 
