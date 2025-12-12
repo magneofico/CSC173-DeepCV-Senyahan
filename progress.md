@@ -27,16 +27,16 @@ This project aims to build an intelligent cropping system specifically for **ima
 
 
 ## Current Status
-| Milestone | Status | Notes |
-|-----------|--------|-------|
-| Project Setup | Completed | Repo created, structure finalized |
-| Class Selection (Person) | In Progress | Using Open Images V7 — Person class only |
-| Dataset Preparation | Pending | Filtering person images; designing aesthetic crop ground truth |
-| Supervised Model (TinyVit) Design | In Progress | Architecture Design Drafting |
-| Supervised Training | Not Started | Planned after dataset finalization |
-| RL Agent (Mini RL) Design | Not Started | To follow after baseline cropper |
-| Photographer Crop Collection | In Progress | Scheduled for mid-project evaluation |
-| Final Testing | Not Started | Pending trained cropper + RL refinement |
+| Milestone                           | Status      | Notes |
+|-------------------------------------|-------------|-------|
+| Project Setup                       | Completed   | Repo created, structure finalized |
+| Class Selection (Person)            | Completed   | Using Open Images V7 — Person class only using OIDv6 |
+| Dataset Preparation                 | Completed   | Filtering person images; designing aesthetic crop ground truth |
+| Supervised Model (TinyVit) Design   | In Progress | Architecture Design Drafting |
+| Supervised Training                 | Not Started | Planned after dataset finalization |
+| RL Agent (Mini RL) Design           | Not Started | To follow after baseline cropper |
+| Photographer Crop Collection        | In Progress | Scheduled for mid-project evaluation |
+| Final Testing                       | Not Started | Pending trained cropper + RL refinement |
 
 
 ## 1. Dataset Progress
@@ -99,8 +99,8 @@ images/sample_person_dataset_preview.png
 
 
 ## 4. Next Steps (Before Final Submission)
-- [ ] Finish dataset filtering (person images only)
-- [ ] Generate aesthetic ground truth crops
+- [x] Finish dataset filtering (person images only)
+- [x] Generate aesthetic ground truth crops
 - [ ] Implement TinyViT backbone
 - [ ] Implement crop regression head
 - [ ] Begin supervised training on ∼500 images
