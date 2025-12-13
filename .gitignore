@@ -22,6 +22,10 @@ data/tmp/
 images/
 images/test
 
+# Temporary files
+notebooks/copy.ipynb
+
+
 # Model weights / checkpoints
 models/weights/
 checkpoints/
