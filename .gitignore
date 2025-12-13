@@ -19,6 +19,8 @@ __pycache__/
 data/raw_images/
 data/processed/
 data/tmp/
+images/
+images/test
 
 # Model weights / checkpoints
 models/weights/
