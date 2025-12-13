@@ -12,32 +12,43 @@
 
 This project aims to build an intelligent cropping system specifically for **images of people**, targeting use cases in **photojournalism and publication workflows**.
 
-> The model will:
-> 1. Subject detection and cropping via supervised TinyViT.
-> 2. Aesthetic refinement via a Mini RL cropping agent.
-> 3. Human-aligned evaluation against professional photojournalist crops.
+> The model is designed to:
+> 1. Perform person-centered crop prediction using a supervised Tiny ViT-style architecture trained on Open Images V7 (Person class).
+> 2. Refine initial crops through a lightweight reinforcement learning agent, which applies sequential pan, zoom, and stop actions guided by aesthetic reward signals.
+> 3. Support human-aligned qualitative evaluation, enabling comparison between model-generated crops and crops produced by professional photojournalists.
 
 > This repository will contain:
-> - Dataset preprocessing scripts
-> - Custom TinyViT model for initial person cropping
-> - RL environment and policy network
-> - Training/evaluation notebooks
-> - Human-photojournalist comparison tests
-> - Final report + presentation materials
+> - Dataset preprocessing and filtering scripts for person-only image selection
+> - A custom Tiny Vision Transformer (ViT-style) backbone with a crop regression head
+> - End-to-end supervised training and evaluation notebooks
+> - A reinforcement learning environment and policy network for crop refinement
+> - Visualization tools for before/after crop comparison
+> - Materials for qualitative human evaluation (photojournalist comparison)
+> - Final report and presentation assets attached in README.md of this repository.
 
 
 ## Current Status
-| Milestone                           | Status      | Notes |
-|-------------------------------------|-------------|-------|
-| Project Setup                       | Completed   | Repo created, structure finalized |
-| Class Selection (Person)            | Completed   | Using Open Images V7 — Person class only using OIDv6 |
-| Dataset Preparation                 | Completed   | Filtering person images; designing aesthetic crop ground truth |
-| Supervised Model (TinyVit) Design   | In Progress | Architecture Design Drafting |
-| Supervised Training                 | Not Started | Planned after dataset finalization |
-| RL Agent (Mini RL) Design           | Not Started | To follow after baseline cropper |
-| Photographer Crop Collection        | In Progress | Scheduled for mid-project evaluation |
-| Final Testing                       | Not Started | Pending trained cropper + RL refinement |
+| Milestone                           | Status      | Notes                                                                     |
+| ----------------------------------- | ----------- | ------------------------------------------------------------------------- |
+| Project Setup                       | Completed   | Repository created, directory structure finalized, environment configured |
+| Class Selection (Person)            | Completed   | Open Images V7 (Person class only) via OIDv6 tooling                      |
+| Dataset Preparation                 | Completed   | Filtered images with exactly one person; cleaned annotations              |
+| Ground-Truth Crop Generation        | Completed   | Bounding-box–based aesthetic crop targets with margin expansion           |
+| Dataset Exploration & Analysis      | Completed   | Distribution checks, image counts, single-person filtering                |
+| Supervised Model Architecture       | Completed   | Tiny ViT-style backbone + MLP crop regression head                        |
+| Supervised Training Pipeline        | Completed   | End-to-end training loop, validation loop, metric logging                 |
+| Supervised Model Training           | Completed   | Trained on ~500 person images; stable convergence achieved                |
+| Model Freezing for RL               | Completed   | Supervised backbone frozen before RL refinement                           |
+| RL Environment Design               | Completed   | Custom crop environment with pan/zoom/stop actions                        |
+| RL Reward Engineering               | Completed   | IoU improvement, subject retention, Rule-of-Thirds, penalties             |
+| RL Policy Network                   | Completed   | Lightweight policy network for crop refinement                            |
+| RL Training                         | Completed   | Successfully trained RL agent (≈40–60 episodes)                           |
+| Qualitative Evaluation (Own Photos) | Completed   | Tested on personal images; before/after comparisons generated             |
+| Photographer Evaluation             | Planned     | Human comparison using photojournalist crops                              |
+| Final Testing & Analysis            | Planned     | Consolidation of results and metrics                                      |
+| Documentation & Presentation        | In Progress | README, report, and demo preparation                                      |
 
+As of this stage `December 14, 2025`, the project has successfully implemented and evaluated both supervised and reinforcement learning components for automatic aesthetic image cropping.
 
 ## 1. Dataset Progress
 ### 1.1 Dataset Source
@@ -63,20 +74,64 @@ images/sample_person_dataset_preview.png
 
 
 ## 2. Model Development Progress
-### 2.1 Supervised Cropper (TinyVit)
-- Architecture:
-    - Patch embedding
-    - 2-4 Transformer encoder blocks
-    - [CLS] token pooling
-    - MLP head → `(x_center, y_center, width, height)`
-- Status: **DRAFTED**, coding text
+### 2.1 Supervised Cropper (Tiny ViT–Style Model)
+
+**Architecture**
+
+- Patch embedding using fixed-size non-overlapping patches
+- Lightweight Vision Transformer backbone
+- 2 Transformer encoder blocks
+- Multi-head self-attention
+- Layer normalization and residual connections
+- Learnable `[CLS]` token with positional embeddings
+- MLP regression head predicting normalized crop parameters
+- Output: `(x_center, y_center, width, height)`
+
+**Training Setup**
+
+- Supervised learning using bounding-box–derived aesthetic crop targets
+- Loss function: Smooth L1 loss + IoU-based loss
+- Optimizer: AdamW with weight decay
+- Trained end-to-end on ~500 person-only images
+
+**Status: COMPLETED**
+
+- Architecture implemented
+- Training and validation pipeline finalized
+- Stable convergence achieved
+- Model checkpointed and frozen for RL refinement
+
 
 ### 2.2 RL Refinement Agent
-- Mini RL Setup:
-    - Actions: pan left/right/up/down, zoom in/out, stop
-    - State: current crop (96×96) + optional crop coords
-    - Reward: IoU improvement + aesthetic bonuses
-- Status: **NOT YET started**, (dependent on baseline cropper)
+Mini RL Setup:
+
+- **Action space:** `Pan left / right / up / down / Zoom in / zoom out / Stop`
+
+- **State representation:**
+    - Current cropped image resized to 96×96
+    - Normalized crop coordinates
+
+- **Environment:**
+    - Custom crop refinement environment
+    - Initialized using the frozen supervised model’s output
+
+- **Reward design:**
+    - IoU improvement relative to previous step
+    - Subject retention penalty
+    - Rule-of-Thirds alignment bonus
+    - Edge-cut and extreme zoom penalties
+    - Aspect-ratio constraint enforcement
+
+- **Training**
+    - Lightweight policy network trained using policy-gradient methods
+    - Short episodes (5–10 steps)
+    - `~40–60` episodes per image for fast convergence
+
+- **Status: COMPLETED (Baseline RL Refinement)**
+    - RL environment implemented
+    - Reward shaping finalized
+    - Policy network trained and tested
+    - Qualitative improvements observed on both dataset images and personal photos
 
 
 ## 3. Planned Evaluation Methods
@@ -106,8 +161,8 @@ images/sample_person_dataset_preview.png
 - [x] Train supervised crop regression model end-to-end
 - [x] Fine-tune the model and achieve stable convergence
 - [x] Log training and validation metrics in a structured format
-- [ ] Design reinforcement learning environment for crop refinement
-- [ ] Implement lightweight RL policy network (pan/zoom/stop actions)
-- [ ] Train RL agent for aesthetic crop refinement (fast training setup)
+- [x] Design reinforcement learning environment for crop refinement
+- [x] Implement lightweight RL policy network (pan/zoom/stop actions)
+- [x] Train RL agent for aesthetic crop refinement (fast training setup)
 - [ ] Conduct qualitative evaluation with photojournalists
 - [ ] Finalize quantitative and qualitative performance metrics
