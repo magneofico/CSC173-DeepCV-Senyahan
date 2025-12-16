@@ -21,6 +21,7 @@ data/processed/
 data/tmp/
 images/
 images/test
+results/
 
 # Temporary files
 notebooks/copy.ipynb
