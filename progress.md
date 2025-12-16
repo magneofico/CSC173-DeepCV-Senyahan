@@ -2,7 +2,7 @@
 **Student:** KRISTOFFER NEO V. SENYAHAN, 2022-4762 
 **Date:** December 11, 2025  
 **Repository:** https://github.com/magneofico/CSC173-DeepCV-Senyahan.git  
-**Commits Since Proposal:** [1 commit/s] | **Last Commit:** December 11, 2025  
+**Commits Since Proposal:** [23 commit/s] | **Last Commit:** December 17, 2025  
 
 ## Project Title
 **Smart Aesthetic Image Cropper for People-Centered Photographs using Tiny Vision Transformers and Reinforcement Learning**
@@ -44,8 +44,7 @@ This project aims to build an intelligent cropping system specifically for **ima
 | RL Policy Network                   | Completed   | Lightweight policy network for crop refinement                            |
 | RL Training                         | Completed   | Successfully trained RL agent (≈40–60 episodes)                           |
 | Qualitative Evaluation (Own Photos) | Completed   | Tested on personal images; before/after comparisons generated             |
-| Photographer Evaluation             | Planned     | Human comparison using photojournalist crops                              |
-| Final Testing & Analysis            | Planned     | Consolidation of results and metrics                                      |
+| Final Testing & Analysis            | Completed   | Consolidation of results and metrics                                      |
 | Documentation & Presentation        | In Progress | README, report, and demo preparation                                      |
 
 As of this stage `December 14, 2025`, the project has successfully implemented and evaluated both supervised and reinforcement learning components for automatic aesthetic image cropping.
@@ -164,5 +163,4 @@ Mini RL Setup:
 - [x] Design reinforcement learning environment for crop refinement
 - [x] Implement lightweight RL policy network (pan/zoom/stop actions)
 - [x] Train RL agent for aesthetic crop refinement (fast training setup)
-- [ ] Conduct qualitative evaluation with photojournalists
-- [ ] Finalize quantitative and qualitative performance metrics
+- [x] Finalize quantitative and qualitative performance metrics
