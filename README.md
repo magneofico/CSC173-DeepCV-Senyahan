@@ -1,35 +1,49 @@
-## Smart Aesthetic Image Cropper for People-Centered Photographs (TinyViT + RL)
+## Smart Aesthetic Image Cropper for People-Centered Photographs (EfficientNet + RL)
 **CSC173 Intelligent Systems Final Project**  
 *Mindanao State University - Iligan Institute of Technology*  
 **Student:** KRISTOFFER NEO V. SENYAHAN, 2022-4762   
 **Semester:** AY 2025-2026 Semester 1  
 
 ## Abstract
-This project introduces a hybrid deep computer vision system designed to automatically produce aesthetic, photojournalism-friendly crops for images containing people. Traditional croppers rely purely on bounding boxes or static heuristics, often producing unbalanced or unengaging compositions. To address this, we propose a two-stage pipeline: (1) a lightweight Tiny Vision Transformer (TinyViT) trained in a supervised manner to identify and generate an initial human-focused crop, and (2) a Mini Reinforcement Learning (RL) agent that refines this crop through actions such as panning and zooming, mimicking how real photographers adjust framing.
+This project presents a ***two-stage deep computer vision system*** for automatically generating aesthetically pleasing crops of people-centered photographs. *Traditional automatic croppers typically rely on simple bounding boxes or fixed heuristics*, which often result in rigid, poorly framed outputs that lack visual appeal. To address this limitation, the proposed system combines `supervised learning` and `reinforcement learning` to better approximate human-like cropping decisions.
 
-My project dataset is sourced from Open Images V7 (Person class), combined with photographer-generated ground truth crops to evaluate aesthetic quality. Results show that the supervised TinyViT already learns strong human-centered cropping, while RL improves centering, headroom, and object emphasis in several cases. A human study with campus photojournalists demonstrates that RL-refined crops often match or approach professional judgment. This work presents a feasible and lightweight approach to aesthetic image cropping, merging modern deep CV models with reinforcement learning for enhanced composition control.
+The system follows a two-stage pipeline. First, a lightweight Convolutional Neural Network (EfficientNet-B0) is trained in a supervised manner to predict an initial human-centered crop. Second, a compact reinforcement learning (RL) agent refines this initial crop through intuitive photographer-like actions such as panning, zooming, and stopping. This refinement stage allows the model to make fine-grained adjustments that are difficult to capture using supervised learning alone.
+
+Training data is sourced from the **Open Images V7 dataset (Person class)**, where annotated bounding boxes are treated as proxy aesthetic crop targets. While these annotations are not explicitly aesthetic, they provide a strong baseline for subject-centered composition. Experimental results show that the supervised EfficientNet-B0 model learns stable and reliable initial crops, and that RL refinement further improves framing quality, headroom, and subject centering in many cases. Qualitative comparisons with crops produced by campus photojournalists suggest that the refined outputs often align with professional framing preferences.
+
+Overall, this work demonstrates a feasible and lightweight approach to aesthetic image cropping by combining modern deep vision models with reinforcement learning for improved composition control.
 
 ## Table of Contents
 
 
 ## Introduction
 ### Problem Statement
-Human-focused images are central to news reporting, publication work, and photojournalism. However, raw images typically require manual cropping to emphasize subjects, follow portrait rules, and produce visually compelling thumbnails. Automating this process is challenging because cropping is not just detection — it involves aesthetic judgment. This project aims to create an intelligent cropper that produces clean, professional, and human-centered crops without manual editing.
+People-centered images are fundamental in photojournalism, news media, and digital publications. However, raw images often require manual cropping to highlight the subject, maintain proper framing, and produce visually appealing thumbnails. Automating this process is challenging because effective cropping goes beyond object detection—it involves aesthetic judgment, balance, and composition.
+
+Most existing automatic cropping systems focus on localization accuracy rather than visual quality, leading to crops that are technically correct but visually unrefined. This project addresses that gap by designing an intelligent cropper that produces clean, professional, and human-centered crops without manual intervention.
 
 ### Objectives
+The objectives of this project are to:
 
-- Train a Tiny Vision Transformer to predict an initial aesthetic crop around a person.
-- Design and train a Mini RL agent to refine the crop using pan/zoom/stop actions.
-- Compare the model’s cropping decisions with human photojournalists.
-- Evaluate quantitative accuracy and qualitative aesthetic preference.
+- Train a convolutional neural network (EfficientNet-B0) to predict an initial human-centered crop.
+- Design and train a lightweight reinforcement learning agent to refine crops using pan, zoom, and stop actions.
+- Compare model-generated crops with those produced by campus photojournalists through qualitative analysis.
+- Evaluate the system using both quantitative metrics and visual inspection.
 
 ### Related Works
 
-- **Vision Transformers (ViT)** for image representation learning have shown superior performance in segmentation and localization tasks.
-- **Aesthetic cropping** has been explored using CNNs but rarely integrates RL or human-photojournalist evaluation.
-- **RL for cropping** exists in early papers, but typically for generic objects, not portrait-oriented images.
-- **Our contribution:** A hybrid TinyViT + RL system evaluated directly against campus photojournalist crops — an uncommon and more realistic benchmark.
+- **Lightweight convolutional neural networks** such as EfficientNet have demonstrated strong performance in image representation and localization tasks while remaining computationally efficient.
+- **Aesthetic image cropping** has traditionally relied on convolutional models and handcrafted heuristics, with relatively limited integration of reinforcement learning for fine-grained refinement.
+- **Reinforcement learning for cropping:** While RL has been explored in prior image cropping studies, most approaches focus on generic object-centric scenarios rather than portrait-oriented or human-centered images.
+- **Our contribution:** This project contributes a hybrid approach that combines a supervised EfficientNet-based crop predictor with a reinforcement learning refinement stage, evaluated using both quantitative overlap metrics and human-aligned qualitative comparisons.
 
+### Limitations
+
+While the proposed system demonstrates promising results, it is not a perfect solution and remains inherently dependent on its training data. The supervised stage relies on person bounding boxes from the Open Images dataset, which are treated as proxy aesthetic crop targets. As a result, the model’s notion of a “good” crop is constrained by the distribution, quality, and biases of the training annotations and may not generalize equally well to all photographic styles or contexts.
+
+Additionally, the reinforcement learning agent is trained using handcrafted reward components and operates within a limited discrete action space. Although this design improves stability and interpretability, it may restrict the range of compositional adjustments achievable compared to more expressive continuous-action policies.
+
+Finally, qualitative evaluation against campus photojournalists is informal and limited in scale. While it provides useful human-aligned insight, it does not constitute a controlled or statistically rigorous user study.
 
 ## Methodology
 ### Dataset
@@ -49,154 +63,15 @@ Human-focused images are central to news reporting, publication work, and photoj
 ## Architecture
 ### Supervised Architecture: Smart Image Cropper
 
-The supervised component of the system is designed to predict a person-centered crop directly from an input photograph. This model serves as a strong baseline and provides the initial crop for later reinforcement learning refinement.   
+Figure 1 illustrates the overall architecture of the supervised crop prediction module. The model takes a single RGB image as input and outputs a normalized human-centered crop, which serves as the initial proposal for reinforcement learning refinement.
 
 ![Supervised Architecture pipeline diagram](images/supervised_architecture.png)  
 
-#### 1. Input Representation and Preprocessing
-Each input image is resized to a fixed resolution of 224 × 224 pixels and normalized using standard ImageNet statistics.
+The supervised model first processes a photo by resizing it in a way that preserves the original image shape and normalizing it so the system can analyze different images consistently. An EfficientNet-B0 network then examines the image to identify where the person is located and how they are framed. Based on this understanding, the model predicts a crop by estimating the center and size of the region that best highlights the person. These predictions are constrained to avoid invalid or extreme crops. The resulting output serves as a reasonable, human-centered crop that can be further refined.
 
-$$
-x \in \mathbb{R}^{B \times 3 \times 224 \times 224}
-$$
+From a technical perspective, the architecture consists of an EfficientNet-B0 backbone operating on letterbox-resized, ImageNet-normalized inputs, followed by global average pooling and a lightweight regression head that predicts normalized crop parameters *(x<sup>c<sup>, y<sup>c</sup>, w, h).* Training uses a combination of Smooth L1 and IoU-based losses to balance regression stability and spatial alignment. The predicted crop provides a robust initialization for the subsequent reinforcement learning refinement stage.
 
-Where:
-- 𝐵 is the batch size,
-- 3 represents the RGB color channels.
-
-This standardization ensures stable training and enables batch processing.
-
----
-
-#### 2. Patch Embedding Layer
-
-The input image is divided into non-overlapping **16 × 16** patches, resulting in:
-
-$$
-N = \left(\frac{224}{16}\right)^2 = 196 \text{ patches}
-$$
-
-Each patch is flattened and projected into a latent embedding space using a linear layer:
-
-$$
-\mathbf{p}_i = W \mathbf{x}_i + \mathbf{b}, \qquad \mathbf{p}_i \in \mathbb{R}^D
-$$
-
-where:
-
-- **\(\mathbf{x}_i\)** is the flattened patch,  
-- **\(D = 128\)** is the hidden dimension.
-
-A learnable **[CLS] token** is prepended to the patch sequence to capture global image information.
-
----
-
-#### 3. Tiny Vision Transformer (TinyViT) Backbone
-
-The patch embeddings are processed by **two transformer encoder blocks**, each composed of:
-
-- Multi-Head Self-Attention (MHSA)
-- Feed-Forward Network (FFN)
-- Residual connections and layer normalization
-
-#### Self-Attention Mechanism
-For each token, attention is computed as:
-
-$$
-\text{Attention}(Q, K, V) = \text{softmax}\left( \frac{QK^\top}{\sqrt{D}} \right) V
-$$
-
-This allows the model to learn **global spatial relationships**, such as:
-
-- where the person is located,
-- how large the person appears,
-- how the subject relates to surrounding context.
-
----
-
-#### 4. Global Feature Embedding
-
-After the transformer blocks, the embedding corresponding to the **[CLS] token** is extracted:
-
-$$
-\mathbf{z} \in \mathbb{R}^{B \times D}
-$$
-
-This vector represents a **global summary** of the image, encoding composition, subject location, and scale.
-
----
-
-#### 5. Crop Regression Head (MLP)
-
-The global embedding **z** is passed into a lightweight **multi-layer perceptron (MLP)** that predicts crop parameters.
-
-$$
-\mathbf{h} = \text{GELU}(\mathbf{W_1 z} + \mathbf{b_1})
-$$
-
-$$
-\hat{\mathbf{b}} = \text{sigmoid}(\mathbf{W_2 h} + \mathbf{b_2})
-$$
-
-The output is:
-
-$$
-\hat{\mathbf{b}} = (x_c, y_c, w, h)
-$$
-
-Where:
-
-- \(( x_c, y_c )\) is the crop center,  
-- \(( w, h )\) are the crop width and height,  
-- all values are normalized to \([0, 1]\).
-
-The **sigmoid activation** ensures valid crop boundaries.
-
----
-
-#### 6. Crop Box Parameterization
-
-The predicted crop is converted into corner coordinates:
-
-$$
-x_1 = x_c - \frac{w}{2}, \quad y_1 = y_c - \frac{h}{2}
-$$
-
-$$
-x_2 = x_c + \frac{w}{2}, \quad y_2 = y_c + \frac{h}{2}
-$$
-
-These values define the region used to crop the original image.
-
----
-
-#### 7. Training Objective
-
-The model is trained end-to-end using a **compound loss**.
-
-#### Smooth L1 Loss
-
-$$\mathcal{L}_{\text{SmoothL1}}(\hat{\mathbf{b}}, \mathbf{b})$$
-
-Encourages stable regression of crop parameters.
-
-#### IoU Loss
-
-$$
-\mathcal{L}_{\text{IoU}} = 1 - \frac{|\hat{B} \cap B|}{|\hat{B} \cup B|}
-$$
-
-Encourages strong spatial overlap between predicted and target crops.
-
-#### Final Loss
-
-$$
-\mathcal{L} = \mathcal{L}_{\text{SmoothL1}} + \mathcal{L}_{\text{IoU}}
-$$
-
----
-The supervised TinyViT crop regressor learns global image composition using transformer attention and directly predicts an aesthetically meaningful crop around a person, forming a strong foundation for later reinforcement learning refinement.
-
+Together, this supervised design establishes a stable and interpretable baseline that enables the reinforcement learning agent to focus on fine-grained aesthetic adjustments rather than coarse localization.
 
 
 
