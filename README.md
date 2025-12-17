@@ -65,41 +65,69 @@ Finally, qualitative evaluation against campus photojournalists is informal and 
 
 Figure 1 illustrates the overall architecture of the supervised crop prediction module. The model takes a single RGB image as input and outputs a normalized human-centered crop, which serves as the initial proposal for reinforcement learning refinement.
 
+
 ![Supervised Architecture pipeline diagram](images/supervised_architecture.png)  
+<br>
+    The supervised model first processes a photo by resizing it in a way that preserves the original image shape and normalizing it so the system can analyze different images consistently. An EfficientNet-B0 network then examines the image to identify where the person is located and how they are framed. Based on this understanding, the model predicts a crop by estimating the center and size of the region that best highlights the person. These predictions are constrained to avoid invalid or extreme crops. The resulting output serves as a reasonable, human-centered crop that can be further refined.
 
-The supervised model first processes a photo by resizing it in a way that preserves the original image shape and normalizing it so the system can analyze different images consistently. An EfficientNet-B0 network then examines the image to identify where the person is located and how they are framed. Based on this understanding, the model predicts a crop by estimating the center and size of the region that best highlights the person. These predictions are constrained to avoid invalid or extreme crops. The resulting output serves as a reasonable, human-centered crop that can be further refined.
+    From a technical perspective, the architecture consists of an EfficientNet-B0 backbone operating on letterbox-resized, ImageNet-normalized inputs, followed by global average pooling and a lightweight regression head that predicts normalized crop parameters *(x<sup>c</sup>, y<sup>c</sup>, w, h).* Training uses a combination of Smooth L1 and IoU-based losses to balance regression stability and spatial alignment. The predicted crop provides a robust initialization for the subsequent reinforcement learning refinement stage.
 
-From a technical perspective, the architecture consists of an EfficientNet-B0 backbone operating on letterbox-resized, ImageNet-normalized inputs, followed by global average pooling and a lightweight regression head that predicts normalized crop parameters *(x<sup>c<sup>, y<sup>c</sup>, w, h).* Training uses a combination of Smooth L1 and IoU-based losses to balance regression stability and spatial alignment. The predicted crop provides a robust initialization for the subsequent reinforcement learning refinement stage.
-
-Together, this supervised design establishes a stable and interpretable baseline that enables the reinforcement learning agent to focus on fine-grained aesthetic adjustments rather than coarse localization.
-
-
+    Together, this supervised design establishes a stable and interpretable baseline that enables the reinforcement learning agent to focus on fine-grained aesthetic adjustments rather than coarse localization.
 
 
-
-
-
-
-
-
-1. inyViT – Supervised Cropper
-    - Patch size: 16
-    - Depth: 2 transformer blocks
-    - Hidden size: 128
-    - Head: MLP predicting `(x_center, y_center, width, height)`
-
-2. Mini RL Refinement Agent
-
-    - Actions: pan left/right/up/down, zoom in/out, stop
-    - State: current crop (96×96) + optional coordinates
-    - Reward: IoU improvement + headroom bonus + centering bonus
-    - Algorithm: DQN / REINFORCE (lightweight for quick convergence)
 
 ### Training Configuration
-| Parameter | Values | 
-|-----------|--------| 
-| Batch size | 16 |
-| Learning Rate | 1e-4 (supervised), 1e-5 (RL) |
-| Epochs | 20 (supervised), ~1–2 hours RL |
-| Optimizer | AdamW |
-| Loss | Smooth L1 + IoU |
+
+1. **EfficientNet-B0 – Supervised Cropper**
+
+- Backbone: EfficientNet-B0 (ImageNet-pretrained)
+- Input Resolution: 224 × 224 (letterbox-resized, aspect ratio preserved)
+- Input Normalization: ImageNet mean and standard deviation
+- Feature Extraction: Convolutional encoder with compound scaling
+- Pooling: Global Average Pooling
+- Head: Lightweight regression head
+- Output: Normalized crop parameters (x_center, y_center, width, height)
+- Output Constraints: Clamped to valid bounds with minimum width/height
+- Loss Function:
+    - Smooth L1 Loss (regression stability)
+    - IoU-based Loss (spatial alignment)
+    - Training Objective: Learn a stable, human-centered initial crop
+- Role in Pipeline: Provides initialization for RL-based crop refinement
+- Learning Rate: `1e-4` Chosen for stable fine-tuning of an ImageNet-pretrained backbone without over-updating low-level features.
+- Epochs: 15(supervised) ~1-2hrs
+- Optimizer: AdamW
+
+---
+
+2. **Mini Reinforcement Learning Agent – Crop Refinement**
+
+- Environment: Custom cropping environment initialized from supervised crop predictions
+- State Representation:
+    - Cropped RGB image patch resized to 96 × 96
+    - Normalized crop parameters (x_center, y_center, width, height)
+- Action Space (Discrete):
+    - Pan left / right / up / down
+    - Zoom in / zoom out
+    - Stop
+- Policy Network:
+    - Lightweight CNN for visual features
+    - Global pooling + concatenation with crop coordinates
+    - Fully connected layer producing action logits
+- RL Algorithm: Policy Gradient (REINFORCE)
+- Reward Function Components:
+    - IoU improvement (primary shaping reward)
+    - Subject containment and edge-cut penalties
+    - Headroom and rule-of-thirds heuristics
+    - Aspect ratio stability
+- Episode Termination:
+    - Stop action
+    - Maximum step limit
+    - Severe crop degradation
+- Optimization:
+    - Adam optimizer
+    - Discounted returns with baseline normalization
+    - Gradient clipping for stability
+- Training Objective: Incrementally refine supervised crops to improve aesthetic composition
+- Learning Rate: `1e-3` Higher learning rate used due to the smaller policy network and noisier policy-gradient updates.
+- Episodes: 1000
+- Optimizer: Adam
