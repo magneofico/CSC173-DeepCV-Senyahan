@@ -95,22 +95,22 @@ Together, this reinforcement learning design enables fine-grained, human-like cr
 
 ### 1. **EfficientNet-B0 – Supervised Cropper**
 
-| Component               | Configuration / Description                                                                                                                                   |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Backbone**            | EfficientNet-B0 (ImageNet-pretrained)                                                                                                                         |
-| **Input Resolution**    | 224 × 224 (letterbox-resized, aspect ratio preserved)                                                                                                         |
-| **Input Normalization** | ImageNet mean and standard deviation                                                                                                                          |
-| **Feature Extraction**  | Convolutional encoder with compound scaling                                                                                                                   |
-| **Pooling**             | Global Average Pooling                                                                                                                                        |
-| **Prediction Head**     | Lightweight regression head                                                                                                                                   |
-| **Output Parameters**   | Normalized crop coordinates *(x<sub>center</sub>, y<sub>center</sub>, width, height)*                                                                         |
-| **Output Constraints**  | Clamped to valid bounds with minimum width and height                                                                                                         |
-| **Loss Functions**      | Smooth L1 Loss (regression stability)<br>IoU-based Loss (spatial alignment)                                                                                   |
-| **Training Objective**  | Learn a stable, human-centered initial crop                                                                                                                   |
-| **Role in Pipeline**    | Provides initialization for RL-based crop refinement                                                                                                          |
-| **Optimizer**           | AdamW                                                                                                                                                         |
-| **Learning Rate**       | `1e-4` (stable fine-tuning of pretrained backbone)                                                                                                            |
-| **Training Epochs**     | 15 epochs (≈ 1–2 hours total training time)                                                                                                                   |
+| Component               | Configuration / Description                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| **Backbone**            | EfficientNet-B0 (ImageNet-pretrained)                                                 |
+| **Input Resolution**    | 224 × 224 (letterbox-resized, aspect ratio preserved)                                 |
+| **Input Normalization** | ImageNet mean and standard deviation                                                  |
+| **Feature Extraction**  | Convolutional encoder with compound scaling                                           |
+| **Pooling**             | Global Average Pooling                                                                |
+| **Prediction Head**     | Lightweight regression head                                                           |
+| **Output Parameters**   | Normalized crop coordinates *(x<sub>center</sub>, y<sub>center</sub>, width, height)* |
+| **Output Constraints**  | Clamped to valid bounds with minimum width and height                                 |
+| **Loss Functions**      | Smooth L1 Loss (regression stability)<br>IoU-based Loss (spatial alignment)           |
+| **Training Objective**  | Learn a stable, human-centered initial crop                                           |
+| **Role in Pipeline**    | Provides initialization for RL-based crop refinement                                  |
+| **Optimizer**           | AdamW                                                                                 |
+| **Learning Rate**       | `1e-4` (stable fine-tuning of pretrained backbone)                                    |
+| **Training Epochs**     | 15 epochs (≈ 1–2 hours total training time)                                           |
 
 
 ### 2. **Mini Reinforcement Learning Agent – Crop Refinement**
@@ -142,3 +142,8 @@ Shown in the figure 3 below illustrates qualitative results produced by the prop
 Even without ground-truth supervision, the supervised model consistently produces reasonable, human-centered initial crops. This indicates that the model has learned stable spatial priors for person localization and framing, successfully capturing the primary subject in most cases. These initial predictions provide a strong and reliable baseline that is suitable for further refinement by the reinforcement learning stage.
 
 Building on this baseline, the reinforcement learning agent introduces subtle but meaningful improvements to crop composition. Across multiple examples, RL-refined crops show improved headroom, better subject centering, and reduced truncation, particularly in portrait-oriented and dynamic scenes. The agent often adjusts crop boundaries in a manner similar to photographer intuition, such as relaxing overly tight framing or re-centering subjects within the image. Although the refinement process is guided by a proxy reward function and uses a dummy reference during this demonstration, the visual improvements suggest that the learned policy generalizes beyond the training distribution. Overall, these results demonstrate that combining supervised crop prediction with reinforcement learning refinement produces more balanced and aesthetically pleasing crops than supervised learning alone when applied to unlabeled real-world images.
+
+
+## Video Presentation
+
+[Watch the video presentation. **Click Here**.](https://youtu.be/qbL7i-UkvXc)
